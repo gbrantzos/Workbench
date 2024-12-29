@@ -23,7 +23,7 @@ public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest,
     {
         var requestType = typeof(TRequest).Name;
         var traceID = Activity.Current?.Id ?? _httpContextAccessor.HttpContext!.TraceIdentifier;
-        var counter = Metrics.CreateCounter("simple_api_requests", "SimpleAPI requests", new[] {"request_type"});
+        var counter = Metrics.CreateCounter("simple_api_requests", "SimpleAPI requests", "request_type");
         counter.WithLabels(requestType).Inc();
         using var scope = _logger.BeginScope(new Dictionary<string, object>
         {

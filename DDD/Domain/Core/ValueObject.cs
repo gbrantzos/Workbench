@@ -9,7 +9,7 @@ public abstract class ValueObject : IEquatable<ValueObject>
     /// Get value object members for equality
     /// </summary>
     /// <returns></returns>
-    protected abstract IEnumerable<object> GetEqualityComponents();
+    protected abstract IEnumerable<IComparable> GetEqualityComponents();
 
     #region Overrides from Object class 
     public override bool Equals(object? obj)

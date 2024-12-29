@@ -14,10 +14,7 @@ using SimpleApi;
 var thisAssembly = typeof(Program).Assembly;
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
-    .WriteTo.File(new CompactJsonFormatter(),
-        "log.txt",
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 7)
+    .WriteTo.File(new CompactJsonFormatter(), "log.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
     .Enrich.WithExceptionDetails()
     .CreateBootstrapLogger();
 
@@ -26,46 +23,37 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     // Support YAML settings
-    builder.Host.ConfigureAppConfiguration((host, config) =>
-    {
-        var jsonSources = config.Sources.Where(s => s is JsonConfigurationSource).ToList();
-        foreach (var source in jsonSources)
-            config.Sources.Remove(source);
-
-        var env = host.HostingEnvironment;
-        config.AddYamlFile("appsettings.yaml", optional: true, reloadOnChange: true);
-        config.AddYamlFile($"appsettings.{env.EnvironmentName}.yaml", optional: true, reloadOnChange: true);
-    });
+    builder.Configuration.ConfigureYaml(builder.Environment);
 
     // Use Autofac
     builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 
     // Wire up Serilog
-    builder.Host.UseSerilog((ctx, services, config) => config
-        .ReadFrom.Configuration(ctx.Configuration)
-        .ReadFrom.Services(services));
+    builder.Host.UseSerilog(
+        (ctx, services, config) => config.ReadFrom.Configuration(ctx.Configuration).ReadFrom.Services(services)
+    );
 
     // Swagger
-    builder.Services
-        .AddEndpointsApiExplorer()
+    builder
+        .Services.AddEndpointsApiExplorer()
         .AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1", new OpenApiInfo {Title = "Simple API", Version = "v1"});
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Simple API", Version = "v1" });
             c.EnableAnnotations();
             c.IgnoreObsoleteActions();
         });
 
     // Setup controllers
-    builder.Services
-        .AddControllers()
+    builder
+        .Services.AddControllers()
         .AddControllersAsServices()
         .ConfigureApiBehaviorOptions(options => options.SuppressModelStateInvalidFilter = true);
-        // Suppress invalid model auto response
-        // https://code-maze.com/apicontroller-attribute-in-asp-net-core-web-api/
+    // Suppress invalid model auto response
+    // https://code-maze.com/apicontroller-attribute-in-asp-net-core-web-api/
 
     // Setup Mediator
-    builder.Services
-        .AddMediatR(thisAssembly)
+    builder
+        .Services.AddMediatR(thisAssembly)
         .AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehaviour<,>))
         .AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
 
@@ -76,8 +64,8 @@ try
     builder.Services.AddValidatorsFromAssembly(thisAssembly);
 
     // Other services
-    builder.Services
-        .AddProblemDetails(options =>
+    builder
+        .Services.AddProblemDetails(options =>
         {
             // Control when an exception is included
             options.IncludeExceptionDetails = (ctx, _) =>
@@ -112,12 +100,10 @@ try
                     return LogEventLevel.Debug;
             }
 
-            return ex != null || ctx.Response.StatusCode > 499
-                ? LogEventLevel.Error
-                : LogEventLevel.Information;
+            return ex != null || ctx.Response.StatusCode > 499 ? LogEventLevel.Error : LogEventLevel.Information;
         };
     });
-    
+
     app.UseRequestResponseLogging(options =>
     {
         options.ExcludePath("/metrics");
@@ -128,15 +114,14 @@ try
 
     app.MapControllers();
     app.MapMetrics();
-    
-    app.MapGet("/", () => $"Welcome to SimpleAPI\n\n{BuildInformation.Instance.ToDisplayString()}")
-        .ExcludeFromDescription();
+
+    app.MapGet("/", () => $"Welcome to SimpleAPI\n\n{BuildInformation.Instance.ToDisplayString()}").ExcludeFromDescription();
 
     // Check also
     // https://andrewlock.net/viewing-overriden-configuration-values-in-aspnetcore/
     app.MapGet("/configuration", () => builder.Configuration.GetDebugView()).ExcludeFromDescription();
 
-    app.Run();
+    await app.RunAsync();
 }
 catch (Exception x)
 {

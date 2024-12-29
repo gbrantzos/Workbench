@@ -5,8 +5,8 @@ namespace SimpleApi;
 public static class GuardExtensions
 {
     public static T ThrowIfNull<T>(this T parameter,
-        [CallerArgumentExpression("parameter")] string parameterName = null!,
-        string? message = null)
+        string? message = null,
+        [CallerArgumentExpression("parameter")] string parameterName = null!)
     {
         if (parameter == null)
         {

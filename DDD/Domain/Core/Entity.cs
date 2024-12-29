@@ -8,7 +8,7 @@ public abstract class EntityID : ValueObject
 
     protected EntityID(int value) => Value = value;
 
-    protected override IEnumerable<object> GetEqualityComponents()
+    protected override IEnumerable<IComparable> GetEqualityComponents()
     {
         yield return Value;
     }
