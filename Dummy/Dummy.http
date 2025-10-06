@@ -4,3 +4,6 @@ GET {{Dummy_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+POST {{Dummy_HostAddress}}/items
+Accept: application/json

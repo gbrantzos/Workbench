@@ -1,7 +1,12 @@
 {
   "profiles": {
     "Workbench": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:5066",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:17011"
+      }
     }
   }
 }
